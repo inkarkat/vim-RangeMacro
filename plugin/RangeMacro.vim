@@ -1,19 +1,30 @@
+" TODO: Capture original range and number of iterations to show "3 macro
+" iterations, 3 new lines"
 function! RangeMacro#SetRegister( register )
     let s:register = a:register
+endfunction
+function! s:GetRangeMarks()
+    return [ "'" . keys(s:marksRecord)[0], "'" . keys(s:marksRecord)[1]]
 endfunction
 function! RangeMacro#Operator( type )
 echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
     if s:register !~# '^[a-z]$' | throw 'ASSERT: s:register not properly set' | endif
 
-    let s:rangeStart = getpos("'[")
-    let s:rangeEnd = getpos("']")
-
+    " The macro may change the number of lines in the range. Thus, we use two
+    " marks instead of simply storing the positions of the range edges. Because
+    " Vim adapts the mark positions when lines are inserted / removed, the macro
+    " will operate on the original range, as intended. 
+    let s:marksRecord = ingomarks#ReserveMarks(2)
+    let [l:startMark, l:endMark] = s:GetRangeMarks()
+    call setpos(l:startMark, getpos("'["))
+    call setpos(l:endMark, getpos("']"))
+    
     " Append recursive macro invocation if not yet there. 
     execute 'let l:macro = @' . s:register
     " Note: Cannot use "\<Plug>" in comparison; it will never match. 
-    "if l:macro !~# s:iterateMapping . '$'
-    if strpart(l:macro, strlen(l:macro) - strlen(s:iterateMapping)) !=# s:iterateMapping
-	execute 'let @' . s:register . ' .= ' . string(s:iterateMapping)
+    "if l:macro !~# s:recurseMapping . '$'
+    if strpart(l:macro, strlen(l:macro) - strlen(s:recurseMapping)) !=# s:recurseMapping
+	execute 'let @' . s:register . ' .= ' . string(s:recurseMapping)
     endif
 
     " Start off the iteration by invoking the (augmented) macro once. 
@@ -29,16 +40,37 @@ echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
     endtry
 endfunction
 
-function! RangeMacro#Iterate( mode )
-    if line('.') < line('$')
-	return '@' . s:register
-    else
+function! RangeMacro#Recurse( mode )
+    " TODO: Check whether position or line contents at last position have changed versus last run? 
+    "let [l:startMark, l:endMark] = s:GetRangeMarks()
+    let [l:startPos, l:endPos] = map(s:GetRangeMarks(), 'getpos(v:val)')
+    let [l:startLine, l:startCol] = [l:startPos[1], l:startPos[2]]
+    let [l:endLine, l:endCol] = [l:endPos[1], l:endPos[2]]
+    if
+    \	l:startPos == [0, 0, 0, 0] ||
+    \	l:endPos == [0, 0, 0, 0] ||
+    \   line('.') < l:startLine ||
+    \	(line('.') == l:startLine && col('.') < l:startCol) ||
+    \   line('.') > l:endLine ||
+    \	(line('.') == l:endLine && col('.') > l:endCol)
+	" Went outside of range. 
+
+	" Clean up the recursive invocation appended to the macro. 
+	execute 'let l:macro = @' . s:register
+	if strpart(l:macro, strlen(l:macro) - strlen(s:recurseMapping)) ==# s:recurseMapping
+	    execute 'let  @' . s:register . ' = strpart(l:macro, 0, strlen(l:macro) - strlen(s:recurseMapping))'
+	endif
+
+	" Stop recursion. 
 	return ''
+    else
+	" Still inside the range. Recurse. 
+	return '@' . s:register
     endif
 endfunction
-let s:iterateMapping = "\<Plug>RangeMacroIterate"
-nnoremap <expr> <Plug>RangeMacroIterate RangeMacro#Iterate('n')
-inoremap <expr> <Plug>RangeMacroIterate RangeMacro#Iterate('i')
+let s:recurseMapping = "\<Plug>RangeMacroRecurse"
+nnoremap <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('n')
+inoremap <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('i')
 
 function! s:GenerateMappings()
     for l:register in split('abcdefghijklmnopqrstuvwxyz', '\zs')
