@@ -7,7 +7,7 @@ function! s:GetRangeMarks()
     return [ "'" . keys(s:marksRecord)[0], "'" . keys(s:marksRecord)[1]]
 endfunction
 function! RangeMacro#Operator( type )
-echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
+"****D echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
     if s:register !~# '^[a-z]$' | throw 'ASSERT: s:register not properly set' | endif
 
     " The macro may change the number of lines in the range. Thus, we use two
@@ -40,6 +40,20 @@ echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
     endtry
 endfunction
 
+function! s:Cleanup()
+    " Restore used marks to previous, recorded state. 
+    call ingomarks#UnreserveMarks(s:marksRecord)
+    unlet s:marksRecord
+
+    " Clean up the recursive invocation appended to the macro. 
+    execute 'let l:macro = @' . s:register
+    if strpart(l:macro, strlen(l:macro) - strlen(s:recurseMapping)) ==# s:recurseMapping
+	execute 'let  @' . s:register . ' = strpart(l:macro, 0, strlen(l:macro) - strlen(s:recurseMapping))'
+    endif
+
+    " Invalidate the saved macro register. 
+    unlet s:register
+endfunction
 function! RangeMacro#Recurse( mode )
     " TODO: Check whether position or line contents at last position have changed versus last run? 
     "let [l:startMark, l:endMark] = s:GetRangeMarks()
@@ -54,23 +68,22 @@ function! RangeMacro#Recurse( mode )
     \   line('.') > l:endLine ||
     \	(line('.') == l:endLine && col('.') > l:endCol)
 	" Went outside of range. 
-
-	" Clean up the recursive invocation appended to the macro. 
-	execute 'let l:macro = @' . s:register
-	if strpart(l:macro, strlen(l:macro) - strlen(s:recurseMapping)) ==# s:recurseMapping
-	    execute 'let  @' . s:register . ' = strpart(l:macro, 0, strlen(l:macro) - strlen(s:recurseMapping))'
-	endif
+	call s:Cleanup()
 
 	" Stop recursion. 
-	return ''
+	" Note: An empty command will beep in normal mode; use another no-op
+	" command. 
+	"return ''
+	return (a:mode ==# 'n' ? ":\<Esc>" : '')
     else
+"****D redraw | sleep 2
 	" Still inside the range. Recurse. 
-	return '@' . s:register
+	return (a:mode ==# 'n' ? '' : "\<Esc>") . '@' . s:register
     endif
 endfunction
 let s:recurseMapping = "\<Plug>RangeMacroRecurse"
-nnoremap <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('n')
-inoremap <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('i')
+nnoremap <silent> <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('n')
+inoremap <silent> <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('i')
 
 function! s:GenerateMappings()
     for l:register in split('abcdefghijklmnopqrstuvwxyz', '\zs')
@@ -83,3 +96,4 @@ call s:GenerateMappings()
 " if ! hasmapto('<Plug>RangeMacroOperator', 'n')
     " nmap <silent> <Leader>@ <Plug>RangeMacroOperator
 " endif
+" TODO: Add :RangeMacro command. 
