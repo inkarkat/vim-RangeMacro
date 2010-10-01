@@ -27,6 +27,14 @@ function! RangeMacro#Operator( type )
 	execute 'let @' . s:register . ' .= ' . string(s:recurseMapping)
     endif
 
+    " Install autocmd to eventually clean up the modified macro in case the
+    " macro errors out before the regular end of the macro execution outside the
+    " macro range is reached. 
+    augroup RangeMacroCleanup
+	autocmd!
+	autocmd CursorHold * call s:Cleanup() | autocmd! RangeMacroCleanup
+    augroup END
+
     " Start off the iteration by invoking the (augmented) macro once. 
     try
 	execute 'normal! @' . s:register
@@ -41,18 +49,20 @@ function! RangeMacro#Operator( type )
 endfunction
 
 function! s:Cleanup()
-    " Restore used marks to previous, recorded state. 
-    call ingomarks#UnreserveMarks(s:marksRecord)
-    unlet s:marksRecord
+    if exists('s:register')
+	" Restore used marks to previous, recorded state. 
+	call ingomarks#UnreserveMarks(s:marksRecord)
+	unlet s:marksRecord
 
-    " Clean up the recursive invocation appended to the macro. 
-    execute 'let l:macro = @' . s:register
-    if strpart(l:macro, strlen(l:macro) - strlen(s:recurseMapping)) ==# s:recurseMapping
-	execute 'let  @' . s:register . ' = strpart(l:macro, 0, strlen(l:macro) - strlen(s:recurseMapping))'
+	" Clean up the recursive invocation appended to the macro. 
+	execute 'let l:macro = @' . s:register
+	if strpart(l:macro, strlen(l:macro) - strlen(s:recurseMapping)) ==# s:recurseMapping
+	    execute 'let  @' . s:register . ' = strpart(l:macro, 0, strlen(l:macro) - strlen(s:recurseMapping))'
+	endif
+
+	" Invalidate the saved macro register. 
+	unlet s:register
     endif
-
-    " Invalidate the saved macro register. 
-    unlet s:register
 endfunction
 function! RangeMacro#Recurse( mode )
     " TODO: Check whether position or line contents at last position have changed versus last run? 
