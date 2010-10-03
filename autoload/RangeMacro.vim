@@ -8,6 +8,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	003	03-Oct-2010	Handling visual mode selections, too. 
+"	002	02-Oct-2010	Moved from incubator to proper autoload/plugin
+"				scripts. 
 "	001	02-Oct-2010	file creation
 let s:save_cpo = &cpo
 set cpo&vim
@@ -23,6 +26,12 @@ function! RangeMacro#Operator( type )
     if s:register !~# '^[a-z]$' | throw 'ASSERT: s:register not properly set' | endif
 
     call RangeMacro#Start(getpos("'["), getpos("']"))
+endfunction
+function! RangeMacro#Selection( register )
+    if a:register !~# '^[a-z]$' | throw 'ASSERT: a:register not properly set' | endif
+    let s:register = a:register
+
+    call RangeMacro#Start(getpos("'<"), getpos("'>"))
 endfunction
 function! RangeMacro#Command( startLine, endLine, register )
     let s:register = (empty(a:register) ? '"' : a:register)
