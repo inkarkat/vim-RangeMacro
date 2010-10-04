@@ -1,4 +1,4 @@
-" RangeMacro.vim: summary
+" RangeMacro.vim: Execute macro repeatedly until the end of a range is reached. 
 "
 " DEPENDENCIES:
 "
@@ -8,6 +8,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	004	04-Oct-2010	ENH: Supporting block selection mode. 
 "	003	03-Oct-2010	Handling visual mode selections, too. 
 "	002	02-Oct-2010	Moved from incubator to proper autoload/plugin
 "				scripts. 
@@ -15,13 +16,13 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" TODO: Capture original range and number of iterations to show "3 macro
-" iterations, 3 new lines"
 let s:recurseMapping = "\<Plug>RangeMacroRecurse"
 function! RangeMacro#SetRegister( register )
     let s:register = a:register
 endfunction
 function! RangeMacro#Operator( type )
+    unlet! s:selectionMode
+
 "****D echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
     if s:register !~# '^[a-z]$' | throw 'ASSERT: s:register not properly set' | endif
 
@@ -30,11 +31,13 @@ endfunction
 function! RangeMacro#Selection( register )
     if a:register !~# '^[a-z]$' | throw 'ASSERT: a:register not properly set' | endif
     let s:register = a:register
+    let s:selectionMode = visualmode()
 
     call RangeMacro#Start(getpos("'<"), getpos("'>"))
 endfunction
 function! RangeMacro#Command( startLine, endLine, register )
     let s:register = (empty(a:register) ? '"' : a:register)
+    unlet! s:selectionMode
 
     " Position cursor at the beginning of the range, first column. 
     execute 'keepjumps normal!' a:startLine . 'G0'
@@ -85,6 +88,8 @@ function! RangeMacro#Start( startPos, endPos )
 endfunction
 
 function! s:Cleanup()
+    unlet! s:selectionMode
+
     if exists('s:register')
 	" Restore used marks to previous, recorded state. 
 	call ingomarks#UnreserveMarks(s:marksRecord)
@@ -101,18 +106,21 @@ function! s:Cleanup()
     endif
 endfunction
 function! RangeMacro#Recurse( mode )
-    " TODO: Check whether position or line contents at last position have changed versus last run? 
-    "let [l:startMark, l:endMark] = s:GetRangeMarks()
     let [l:startPos, l:endPos] = map(s:GetRangeMarks(), 'getpos(v:val)')
     let [l:startLine, l:startCol] = [l:startPos[1], l:startPos[2]]
     let [l:endLine, l:endCol] = [l:endPos[1], l:endPos[2]]
+
+    " In block selection mode, the start and end columns must be checked on
+    " every line, not just at the start and end of the range. 
+    let l:isBlockSelection = (exists('s:selectionMode') && s:selectionMode ==# "\<C-v>")
+
     if
     \	l:startPos == [0, 0, 0, 0] ||
     \	l:endPos == [0, 0, 0, 0] ||
     \   line('.') < l:startLine ||
-    \	(line('.') == l:startLine && col('.') < l:startCol) ||
+    \	((l:isBlockSelection || line('.') == l:startLine) && col('.') < l:startCol) ||
     \   line('.') > l:endLine ||
-    \	(line('.') == l:endLine && col('.') > l:endCol)
+    \	((l:isBlockSelection || line('.') == l:endLine) && col('.') > l:endCol)
 	" Went outside of range. 
 	call s:Cleanup()
 
