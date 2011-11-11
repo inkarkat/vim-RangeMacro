@@ -10,6 +10,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.00.004	05-Oct-2010	Supporting more than just registers a-z. 
+"				Made mapping registers available to the autoload
+"				script via g:RangeMacro_Registers. 
 "	003	03-Oct-2010	Added visual mode mappings. 
 "	002	02-Oct-2010	Moved from incubator to proper autoload/plugin
 "				scripts. 
@@ -22,8 +25,8 @@ endif
 let g:loaded_RangeMacro = 1
 
 "- configuration --------------------------------------------------------------
-if ! exists('g:RangeMacro_mapping')
-    let g:RangeMacro_mapping = '<Leader>@'
+if ! exists('g:RangeMacro_Mapping')
+    let g:RangeMacro_Mapping = '<Leader>@'
 endif
 
 
@@ -31,10 +34,11 @@ endif
 nnoremap <silent> <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('n')
 inoremap <silent> <expr> <Plug>RangeMacroRecurse RangeMacro#Recurse('i')
 
+let g:RangeMacro_Registers = '0123456789abcdefghijklmnopqrstuvwxyz".*+'
 function! s:GenerateMappings()
-    for l:register in split('abcdefghijklmnopqrstuvwxyz', '\zs')
-	execute printf('nnoremap <silent> %s%s :<C-u>call RangeMacro#SetRegister(%s)<Bar>set opfunc=RangeMacro#Operator<CR>g@', g:RangeMacro_mapping, l:register, string(l:register))
-	execute printf('xnoremap <silent> %s%s :<C-u>call RangeMacro#Selection(%s)<CR>', g:RangeMacro_mapping, l:register, string(l:register))
+    for l:register in split(g:RangeMacro_Registers, '\zs')
+	execute printf('nnoremap <silent> %s%s :<C-u>call RangeMacro#SetRegister(%s)<Bar>set opfunc=RangeMacro#Operator<CR>g@', g:RangeMacro_Mapping, l:register, string(l:register))
+	execute printf('xnoremap <silent> %s%s :<C-u>call RangeMacro#Selection(%s)<CR>', g:RangeMacro_Mapping, l:register, string(l:register))
     endfor
 endfunction
 call s:GenerateMappings()
