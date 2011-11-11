@@ -1,6 +1,7 @@
 " RangeMacro.vim: Execute macro repeatedly until the end of a range is reached. 
 "
 " DEPENDENCIES:
+"   - ingomarks.vim autoload script. 
 "
 " Copyright: (C) 2010 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'. 
@@ -8,6 +9,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.00.005	05-Oct-2010	Factored out checking for invalid registers and
+"				print error message now, as the :@ command does. 
 "	004	04-Oct-2010	ENH: Supporting block selection mode. 
 "	003	03-Oct-2010	Handling visual mode selections, too. 
 "	002	02-Oct-2010	Moved from incubator to proper autoload/plugin
@@ -20,22 +23,36 @@ let s:recurseMapping = "\<Plug>RangeMacroRecurse"
 function! RangeMacro#SetRegister( register )
     let s:register = a:register
 endfunction
+
+function! s:CheckRegister( register )
+    if stridx(g:RangeMacro_Registers, a:register) == -1
+	let v:errmsg = printf("E354: Invalid register name: '%s'", a:register)
+	echohl ErrorMsg
+	echomsg v:errmsg
+	echohl None
+
+	return 0
+    else
+	return 1
+    endif
+endfunction
 function! RangeMacro#Operator( type )
     unlet! s:selectionMode
 
 "****D echomsg '****' string(getpos('.')) string(getpos("'[")) string(getpos("']"))
-    if s:register !~# '^[a-z]$' | throw 'ASSERT: s:register not properly set' | endif
+    if ! s:CheckRegister(s:register) | return | endif
 
     call RangeMacro#Start(getpos("'["), getpos("']"))
 endfunction
 function! RangeMacro#Selection( register )
-    if a:register !~# '^[a-z]$' | throw 'ASSERT: a:register not properly set' | endif
+    if ! s:CheckRegister(a:register) | return | endif
     let s:register = a:register
     let s:selectionMode = visualmode()
 
     call RangeMacro#Start(getpos("'<"), getpos("'>"))
 endfunction
 function! RangeMacro#Command( startLine, endLine, register )
+    if ! s:CheckRegister(a:register) | return | endif
     let s:register = (empty(a:register) ? '"' : a:register)
     unlet! s:selectionMode
 
