@@ -2,7 +2,7 @@
 "
 " DEPENDENCIES:
 "   - ingo/msg.vim autoload script
-"   - ingomarks.vim autoload script
+"   - ingo/plugin/marks.vim autoload script
 "
 " Copyright: (C) 2010-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -10,6 +10,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.01.007	08-Jul-2013	Move ingomarks.vim into ingo-library.
 "   1.01.006	14-Jun-2013	Use ingo/msg.vim.
 "   1.00.005	05-Oct-2010	Factored out checking for invalid registers and
 "				print error message now, as the :@ command does.
@@ -68,7 +69,7 @@ function! RangeMacro#Start( startPos, endPos )
     " marks instead of simply storing the positions of the range edges. Because
     " Vim adapts the mark positions when lines are inserted / removed, the macro
     " will operate on the original range, as intended.
-    let s:marksRecord = ingomarks#ReserveMarks(2)
+    let s:marksRecord = ingo#plugin#marks#Reserve(2)
     let [l:startMark, l:endMark] = s:GetRangeMarks()
     call setpos(l:startMark, a:startPos)
     call setpos(l:endMark, a:endPos)
@@ -102,7 +103,7 @@ function! s:Cleanup()
 
     if exists('s:register')
 	" Restore used marks to previous, recorded state.
-	call ingomarks#UnreserveMarks(s:marksRecord)
+	call ingo#plugin#marks#Unreserve(s:marksRecord)
 	unlet s:marksRecord
 
 	" Clean up the recursive invocation appended to the macro.
