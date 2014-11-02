@@ -1,0 +1,9 @@
+E354: Invalid register name: '-'
+
+E488: Trailing characters: silent! 2,5RangeMacro /
+
+E488: Trailing characters: silent! 2,5RangeMacro :
+
+E488: Trailing characters: silent! 2,5RangeMacro %
+
+E488: Trailing characters: silent! 2,5RangeMacro #
