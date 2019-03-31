@@ -4,7 +4,7 @@
 "   - ingo/msg.vim autoload script
 "   - ingo/plugin/marks.vim autoload script
 "
-" Copyright: (C) 2010-2013 Ingo Karkat
+" Copyright: (C) 2010-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -93,7 +93,7 @@ function! RangeMacro#Start( startPos, endPos )
     " Start off the iteration by invoking the (augmented) macro once.
     try
 	execute 'normal! @' . s:register
-    catch /^Vim\%((\a\+)\)\=:E/
+    catch /^Vim\%((\a\+)\)\=:/
 	call ingo#msg#VimExceptionMsg()
     endtry
 endfunction
