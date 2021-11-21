@@ -1,0 +1,25 @@
+SENTENCES: 
+Here. THIS IS
+A SENTENCE
+OVER FOUR
+LINES. Followed by another sentence. 
+
+TAGS:
+<body>
+inside
+ the
+body tag
+</body>
+
+PARAGRAPHS:
+
+paragraph one
+contains text
+
+paragraph two
+has more text
+
+Paragraph three
+what do I write in here?
+
+EOF
