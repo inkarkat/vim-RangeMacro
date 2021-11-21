@@ -1,0 +1,9 @@
+This is a test of Vim commands: 
+:SEt fo?
+:EChomsg "hallo"
+
+:yank
+:put
+:echo "yeah"
+Doesn't make much sense. 
+EOF
