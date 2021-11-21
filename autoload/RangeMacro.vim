@@ -1,15 +1,15 @@
 " RangeMacro.vim: Execute macro repeatedly until the end of a range is reached.
 "
 " DEPENDENCIES:
-"   - ingo/msg.vim autoload script
-"   - ingo/plugin/marks.vim autoload script
+"   - ingo-library.vim plugin
 "
-" Copyright: (C) 2010-2014 Ingo Karkat
+" Copyright: (C) 2010-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.01.008	01-Apr-2019	Refactoring: Use ingo#pos#Make4().
 "   1.01.007	08-Jul-2013	Move ingomarks.vim into ingo-library.
 "   1.01.006	14-Jun-2013	Use ingo/msg.vim.
 "   1.00.005	05-Oct-2010	Factored out checking for invalid registers and
@@ -57,7 +57,7 @@ function! RangeMacro#Command( startLine, endLine, register )
 
     " Position cursor at the beginning of the range, first column.
     execute 'keepjumps normal!' a:startLine . 'G0'
-    call RangeMacro#Start( [0, a:startLine, 1, 0], [0, a:endLine, strlen(getline(a:endLine)), 0])
+    call RangeMacro#Start(ingo#pos#Make4(a:startLine, 1), ingo#pos#Make4(a:endLine, strlen(getline(a:endLine))))
 endfunction
 function! s:GetRangeMarks()
     return [ "'" . keys(s:marksRecord)[0], "'" . keys(s:marksRecord)[1]]
