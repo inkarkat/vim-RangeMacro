@@ -1,0 +1,19 @@
+:set fo?
+:echomsg "hallo"
+:yank
+:put
+:echo "yeah"
+<body>
+inside
+ the
+body tag
+</body>
+---
+A long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long line with non-breaking spaces, so that for example here again this long block word won't break. 
+---
+The foo is bar. 
+The bar is me. 
+The baz is quux. 
+That one has not one. 
+
+The end.
