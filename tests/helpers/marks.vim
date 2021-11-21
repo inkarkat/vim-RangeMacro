@@ -1,4 +1,6 @@
 function! InitMarks( marks, unsetMarks )
+    let l:save_position = getpos('.')
+
     " Preset all marks to subsequent lines, wrapping around at EOF. 
     1
     for l:mark in a:marks
@@ -9,6 +11,8 @@ function! InitMarks( marks, unsetMarks )
 	    execute 'delmarks ' . l:mark
 	endif
     endfor
+
+    call setpos('.', l:save_position)
 endfunction
 function! RecordMarks( marks )
     let l:marksRecord = {}
