@@ -1,7 +1,17 @@
+" Set this to indicate that the macro will end with an error and does not reach
+" the end of the range. 
+let g:isErroring = 0
+
 function! RunMacro( macro, motion )
     let @m = a:macro
     execute 'normal \@m' . a:motion
-    call vimtap#Is(@m, a:macro, 'Macro intact after invocation')
+    if exists('g:isErroring') && g:isErroring
+	call vimtap#Isnt(@m, a:macro, 'Macro not yet restored after invocation')
+	doautocmd CursorHold
+	call vimtap#Is(@m, a:macro, 'Macro intact after CursorHold')
+    else
+	call vimtap#Is(@m, a:macro, 'Macro intact after invocation')
+    endif
 endfunction
 
 function! RunMacroAndCheckMarks( macro, motion, canCheckAllMarks, ...)
