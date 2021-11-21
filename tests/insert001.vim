@@ -1,23 +1,19 @@
 " Test a macro that ends in insert mode. 
 " Tests that the macro was executed properly only over the range. 
 " Tests that the macro remains intact after the invocation. 
-" Tests that the marks are restored to the original state. 
+" Tests cursor end position. 
+" Tests that all marks are restored to the original state. 
 
 source helpers/marks.vim
 source helpers/runmacro.vim
 
 call vimtest#StartTap()
-call vimtap#Plan(2)
-edit test.txt
+call vimtap#Plan(3)
+edit simple.txt
 
-    let s:marks = split('abcdefghijklmnopqrstuvwxyz', '\zs')
-    call InitMarks(s:marks, split('dfghjk', '\zs'))
-    let s:marksBefore = RecordMarks(s:marks)
-
-	normal! gg0
-	call RunMacro('jI!', '3j')
-
-    call vimtap#Is(CompareMarks(s:marksBefore, RecordMarks(s:marks)), {}, 'Marks restored to original state')
+normal! 1G0
+call RunMacroAndCheckMarks('jI!', '4j', 1)
+call vimtap#Is(getpos('.'), [0, 6, 1, 0], 'End position')
 
 call vimtest#SaveOut()
 call vimtest#Quit()
